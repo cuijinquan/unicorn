@@ -1,6 +1,5 @@
 ﻿
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using Unicorn.Internal;
 using Unicorn.Util;
@@ -18,36 +17,38 @@ namespace Unicorn {
 
 			_connectionConfig = conf.GetConnectionConfig();
 			_channelMap = conf.GetChannelMap();
-
 			_state = RouterState.None;
-			_shutdown = false;
+			_shuttingDown = false;
 			_hostId = -1;
 			_clientId = -1;
 			_connectionMap = new SortedDictionary<int, Connection>();
 			_connections = new Set<Connection>();
-			_connections.Added(conn => {
-			}, false);
-			_connections.Removed(conn => {
-			}, false);
-
+			_connections.Added(conn => _connectionMap[conn.Id] = conn, false);
+			_connections.Removed(conn => _connectionMap.Remove(conn.Id), false);
 			_receiveBuffer = new byte[conf.ReceiveBufferSize];
+
+			RouterWorker.Create(this);
 		}
-		
+
 		private readonly ConnectionConfig _connectionConfig;
 		private readonly SortedDictionary<int, int> _channelMap;
 
 		private RouterState _state;
-		private bool _shutdown;
+		private bool _shuttingDown;
 		private int _hostId;
 		private int _clientId;
 		private SortedDictionary<int, Connection> _connectionMap;
 		private Set<Connection> _connections;
 		private byte[] _receiveBuffer;
-		
+
 		/// <summary>
 		/// Get the current network state.
 		/// </summary>
 		public RouterState State { get { return _state; } }
+		/// <summary>
+		/// True if currently shutting down.
+		/// </summary>
+		public bool IsShuttingDown { get { return _shuttingDown; } }
 		/// <summary>
 		/// True if a server or a client.
 		/// </summary>
@@ -64,12 +65,28 @@ namespace Unicorn {
 		/// Get the root set of all network connections.
 		/// </summary>
 		public IReadonlyObservableSet<Connection> Connections { get { return _connections; } }
-		
 
 
+
+		/// <summary>
+		/// Called when the network has been started.
+		/// </summary>
 		protected virtual void Started() { }
+		/// <summary>
+		/// Called when shutting down. The <see cref="Stopped"/> function
+		/// will be called as soon as all connections are closed.
+		/// </summary>
 		protected virtual void ShuttingDown() { }
+		/// <summary>
+		/// Called when the network has been stopped.
+		/// </summary>
 		protected virtual void Stopped() { }
+		/// <summary>
+		/// Called to handle inbound messages.
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="buffer"></param>
+		/// <param name="length"></param>
 		protected virtual void Receive(Connection sender, byte[] buffer, int length) { }
 
 
@@ -81,7 +98,7 @@ namespace Unicorn {
 		/// <param name="maxConnections"></param>
 		/// <returns></returns>
 		public bool StartServer(int port, int maxConnections) {
-			if (_state != RouterState.None || _shutdown)
+			if (_state != RouterState.None || _shuttingDown)
 				throw new InvalidOperationException();
 			if ((_hostId = NetworkTransport.AddHost(new HostTopology(_connectionConfig, maxConnections), port)) >= 0) {
 				_state = RouterState.Server;
@@ -98,7 +115,7 @@ namespace Unicorn {
 		/// <param name="ipAddress"></param>
 		/// <param name="port"></param>
 		public void Connect(string ipAddress, int port) {
-			if (_state != RouterState.None || _shutdown)
+			if (_state != RouterState.None || _shuttingDown)
 				throw new InvalidOperationException();
 			_hostId = NetworkTransport.AddHost(new HostTopology(_connectionConfig, 1));
 
@@ -111,18 +128,36 @@ namespace Unicorn {
 				NetworkTransport.RemoveHost(_hostId);
 			}
 		}
-		
+
 		/// <summary>
-		/// Softly close all connections & stop after all connections have been fully closed.
+		/// Send disconnect request to all connections &amp; stop after all connections have been closed.
 		/// </summary>
 		public void Shutdown() {
-			if (_state != RouterState.None && !_shutdown) {
-				_shutdown = true;
+			if (_state != RouterState.None && !_shuttingDown) {
+				_shuttingDown = true;
 				ShuttingDown();
 				foreach (var conn in _connections)
 					conn.Disconnect();
+
+				TryFinalizeShutdown();
 			}
 		}
+
+		private void TryFinalizeShutdown() {
+			if ((_state == RouterState.Client || _shuttingDown) && _connections.Count == 0) {
+				_shuttingDown = false;
+				NetworkTransport.RemoveHost(_hostId);
+				_hostId = -1;
+				_clientId = -1;
+				try {
+					Stopped();
+				} finally {
+					_state = RouterState.None;
+				}
+			}
+		}
+
+
 
 		void IRouterInternal.Update() {
 			if (_state != RouterState.None) {
@@ -140,7 +175,7 @@ namespace Unicorn {
 
 					switch (eventType) {
 						case NetworkEventType.ConnectEvent:
-							if (!_shutdown && (_state == RouterState.Server || connId == _clientId)) {
+							if (!_shuttingDown && (_state == RouterState.Server || connId == _clientId)) {
 								conn = new Connection(this, _hostId, connId);
 								_connections.Add(conn);
 							} else {
@@ -151,17 +186,7 @@ namespace Unicorn {
 						case NetworkEventType.DisconnectEvent:
 							if (_connectionMap.TryGetValue(connId, out conn)) {
 								((IConnectionInternal)conn).TransportLayerDisconnected();
-								if ((_state == RouterState.Client || _shutdown) && _connections.Count == 0) {
-									_shutdown = false;
-									NetworkTransport.RemoveHost(_hostId);
-									_hostId = -1;
-									_clientId = -1;
-									try {
-										Stopped();
-									} finally {
-										_state = RouterState.None;
-									}
-								}
+								TryFinalizeShutdown();
 							}
 							break;
 
@@ -181,7 +206,7 @@ namespace Unicorn {
 				} while (eventType != NetworkEventType.Nothing);
 			}
 		}
-		
+
 		void IRouterInternal.Disconnected(Connection conn) {
 			_connections.Remove(conn);
 		}

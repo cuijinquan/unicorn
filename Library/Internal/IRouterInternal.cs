@@ -8,7 +8,12 @@ namespace Unicorn.Internal {
 		/// Called by a router's worker object to update.
 		/// </summary>
 		void Update();
-		
+
+		/// <summary>
+		/// Called by a router's worker object to shutdown.
+		/// </summary>
+		void Shutdown();
+
 		/// <summary>
 		/// Called by a connection when disconnected.
 		/// </summary>

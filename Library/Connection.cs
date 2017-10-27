@@ -31,7 +31,7 @@ namespace Unicorn {
 			if (error != (byte)NetworkError.Ok)
 				throw new TransportLayerException(error);
 		}
-		
+
 		private readonly Meta _meta;
 		private readonly IRouterInternal _router;
 		private readonly int _hostId;
@@ -60,7 +60,7 @@ namespace Unicorn {
 		/// The remote port.
 		/// </summary>
 		public int RemotePort { get { return _remotePort; } }
-		
+
 		/// <summary>
 		/// Get a short string for the connection for debugging purpose.
 		/// </summary>
@@ -97,9 +97,8 @@ namespace Unicorn {
 		}
 
 		void IConnectionInternal.TransportLayerDisconnected() {
-			if (_disconnected ? false : _disconnected = true) {
-				_router.Disconnected(this);
-			}
+			_disconnected = true;
+			_router.Disconnected(this);
 		}
 
 		IEnumerator<Connection> IEnumerable<Connection>.GetEnumerator() {
