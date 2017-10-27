@@ -18,7 +18,7 @@ namespace Unicorn {
 		/// <param name="id">The transport layer connection id.</param>
 		public Connection(Router router, int hostId, int id) {
 			_meta = new Meta();
-			_router = (IRouterInternal)router;
+			_router = router;
 			_hostId = hostId;
 			_id = id;
 			_disconnected = false;
