@@ -203,7 +203,7 @@ namespace Unicorn {
 							}
 							break;
 					}
-				} while (eventType != NetworkEventType.Nothing);
+				} while (eventType != NetworkEventType.Nothing && _hostId >= 0);
 			}
 		}
 

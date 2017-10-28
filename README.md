@@ -15,7 +15,7 @@ This is an early in-development version!
 + [x] Fully observable connection sets &amp; subsets.
 + [x] Simple & fast io for serializing network data.
 + [x] "Peers" for client and server api separation.
-+ [ ] Method call routing using message ids.
++ [x] Method call routing using message ids with explicit serialization.
 
 <br/>
 
