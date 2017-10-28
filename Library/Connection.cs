@@ -108,5 +108,11 @@ namespace Unicorn {
 		IEnumerator IEnumerable.GetEnumerator() {
 			yield return this;
 		}
+
+
+
+		public static bool IsDead(Connection conn) {
+			return conn._disconnected;
+		}
 	}
 }

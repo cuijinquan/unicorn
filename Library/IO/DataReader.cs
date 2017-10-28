@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Text;
+using Unicorn.Entities;
 using UnityEngine;
 
 namespace Unicorn.IO {
@@ -29,6 +30,10 @@ namespace Unicorn.IO {
 
 		public Quaternion ReadQuaternion() {
 			return new Quaternion(ReadSingle(), ReadSingle(), ReadSingle(), ReadSingle());
+		}
+
+		public EntityId ReadEntityId() {
+			return new EntityId(ReadUInt32());
 		}
 	}
 }
