@@ -1,10 +1,21 @@
 # Unicorn Layer
 Lightweight networking system for the unity transport layer api
 
-<br/>
-
 ## Status
 This is an early in-development version!
+
+<br/>
+
+
+
+## What will be included?
++ [x] Simple server-client system.
++ [x] Network state management.
++ [x] Additional static network api.
++ [x] Fully observable connection sets &amp; subsets.
++ [x] "Peers" for client and server api separation.
+
+<br/>
 
 
 
