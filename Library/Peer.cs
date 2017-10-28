@@ -4,6 +4,11 @@ using Unicorn.Util;
 
 namespace Unicorn {
 	public class Peer : IPeerInternal {
+		public Peer() {
+			_disposeShutdown = new Disposable();
+			_disposeStopped = new Disposable();
+		}
+
 		/// <summary>
 		/// Called when the network has been started.
 		/// </summary>
@@ -12,11 +17,17 @@ namespace Unicorn {
 		/// Called when shutting down. The <see cref="Stopped"/> function
 		/// will be called as soon as all connections are closed.
 		/// </summary>
-		protected virtual void ShuttingDown() { }
+		protected virtual void ShuttingDown() {
+			_disposeShutdown.Dispose();
+		}
+
 		/// <summary>
 		/// Called when the network has been stopped.
 		/// </summary>
-		protected virtual void Stopped() { }
+		protected virtual void Stopped() {
+			_disposeStopped.Dispose();
+		}
+
 		/// <summary>
 		/// Called to handle inbound messages.
 		/// </summary>
@@ -26,9 +37,9 @@ namespace Unicorn {
 		protected virtual void Receive(Connection sender, byte[] buffer, int length) { }
 
 		private Router _router;
-
-
-
+		private readonly Disposable _disposeStopped;
+		private readonly Disposable _disposeShutdown;
+		
 		/// <summary>
 		/// True if currently shutting down.
 		/// </summary>
@@ -39,7 +50,17 @@ namespace Unicorn {
 		/// </summary>
 		protected IReadonlyObservableSet<Connection> Connections { get { return _router.Connections; } }
 
+		/// <summary>
+		/// Get a disposable that is disposed when the base of <see cref="ShuttingDown"/> is called.
+		/// </summary>
+		protected Disposable DisposeShutdown { get { return _disposeShutdown; } }
 
+		/// <summary>
+		/// Get a disposable that is disposed when the base of <see cref="Stopped"/> is called.
+		/// </summary>
+		protected Disposable DisposeStopped { get { return _disposeStopped; } }
+
+		
 
 		void IPeerInternal.Started(Router router) {
 			_router = router;

@@ -8,6 +8,7 @@ namespace Unicorn.Internal {
 
 		private void Awake() {
 			DontDestroyOnLoad(gameObject);
+			gameObject.hideFlags = HideFlags.HideInHierarchy;
 		}
 
 		private void Start() {

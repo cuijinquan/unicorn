@@ -13,7 +13,9 @@ This is an early in-development version!
 + [x] Network state management.
 + [x] Additional static network api.
 + [x] Fully observable connection sets &amp; subsets.
++ [x] Simple & fast io for serializing network data.
 + [x] "Peers" for client and server api separation.
++ [ ] Method call routing using message ids.
 
 <br/>
 
