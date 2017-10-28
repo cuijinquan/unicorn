@@ -16,6 +16,7 @@ This is an early in-development version!
 + [x] Simple & fast io for serializing network data.
 + [x] "Peers" for client and server api separation.
 + [x] Method call routing using message ids.
++ [ ] Separate entity system.
 
 <br/>
 
