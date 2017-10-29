@@ -43,7 +43,12 @@ namespace Unicorn.Entities {
 		private bool _isMine;
 		public bool IsMine {
 			get { return _isMine; }
-			set { _isMine = value; }
+			set {
+				if (_isMine != value) {
+					_isMine = value;
+					SendMessage("EntityOwnershipChanged", _isMine, SendMessageOptions.DontRequireReceiver);
+				}
+			}
 		}
 
 		private Disposable _disposable;
@@ -62,12 +67,24 @@ namespace Unicorn.Entities {
 				var system = EntitySystem.Get();
 				if (system != null) {
 					_group = new SetProxy<Connection>();
-					_disposable.Add(_group.Added(conn => system.GroupConnected(this, conn), false));
-					_disposable.Add(_group.Removed(conn => system.GroupDisconnected(this, conn), false));
+					_disposable.Add(_group.Added(conn => {
+						system.GroupConnected(this, conn);
+						SendMessage("EntityGroupConnected", conn, SendMessageOptions.DontRequireReceiver);
+					}, false));
+					_disposable.Add(_group.Removed(conn => {
+						system.GroupDisconnected(this, conn);
+						SendMessage("EntityGroupDisconnected", conn, SendMessageOptions.DontRequireReceiver);
+					}, false));
 
 					_owners = new BacklogSubSet<Connection>(system.Owners, Connection.IsDead);
-					_disposable.Add(_owners.Added(conn => system.OwnershipChanged(this, conn, true), false));
-					_disposable.Add(_owners.Removed(conn => system.OwnershipChanged(this, conn, false), false));
+					_disposable.Add(_owners.Added(conn => {
+						system.OwnershipChanged(this, conn, true);
+						SendMessage("EntityOwnerAdded", conn, SendMessageOptions.DontRequireReceiver);
+					}, false));
+					_disposable.Add(_owners.Removed(conn => {
+						system.OwnershipChanged(this, conn, false);
+						SendMessage("EntityOwnerRemoved", conn, SendMessageOptions.DontRequireReceiver);
+					}, false));
 				}
 			}
 		}
@@ -83,9 +100,18 @@ namespace Unicorn.Entities {
 
 
 
+		public T As<T>() where T : Component {
+			var component = GetComponent<T>();
+			if (component == null)
+				throw new MissingComponentException(typeof(T).Name);
+			return component;
+		}
+
+
+
 		private static readonly SortedDictionary<EntityId, Entity> _map = new SortedDictionary<EntityId, Entity>();
 
-		public static IEnumerable<Entity> All { get { return _map.Values; } }
+		public static SortedDictionary<EntityId, Entity>.ValueCollection All { get { return _map.Values; } }
 
 
 
