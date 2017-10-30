@@ -5,7 +5,8 @@ using UnityEngine;
 
 namespace Unicorn.Util {
 	public class Timer {
-		public Timer(TimerState state, float value) : this(state, TimeSource.Default, value) { }
+		public Timer() : this(TimerState.Paused, 0) { }
+		public Timer(TimerState state, float value) : this(state, TimeSource.Unscaled, value) { }
 		public Timer(TimerState state, TimeSource source, float value) {
 			_state = state;
 			_source = source;
@@ -15,6 +16,15 @@ namespace Unicorn.Util {
 		private TimerState _state;
 		private TimeSource _source;
 		private float _value;
+
+		public override string ToString() {
+			return Value.ToString();
+		}
+
+		public string ToString(int decimalDigits) {
+			var f = Mathf.Pow(10, decimalDigits);
+			return (Mathf.Floor(Value * f) / f).ToString();
+		}
 
 		public virtual void Set(TimerState state, float value) {
 			_state = state;
@@ -66,8 +76,8 @@ namespace Unicorn.Util {
 
 		public static float GetCurrentTime(TimeSource source) {
 			switch(source) {
-				case TimeSource.Default: return Time.time;
-				case TimeSource.DefaultUnscaled: return Time.unscaledTime;
+				case TimeSource.Unscaled: return Time.unscaledTime;
+				case TimeSource.Scaled: return Time.time;
 				default: throw new ArgumentOutOfRangeException("source");
 			}
 		}

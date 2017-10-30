@@ -1,7 +1,7 @@
 ﻿
 using System;
 
-namespace Unicorn.Entities {
+namespace Unicorn.Game {
 	public struct EntityId : IComparable<EntityId>, IEquatable<EntityId> {
 		public EntityId(uint value) {
 			_value = value;

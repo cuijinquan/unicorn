@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Unicorn.Util;
 using UnityEngine;
 
-namespace Unicorn.Entities {
+namespace Unicorn.Game {
 	[RequireComponent(typeof(Entity))]
 	public abstract class EntityBehaviour : MonoBehaviour {
 		private Entity _entity;

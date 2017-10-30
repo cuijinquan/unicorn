@@ -2,7 +2,7 @@
 using System;
 using System.IO;
 using System.Text;
-using Unicorn.Entities;
+using Unicorn.Game;
 using UnityEngine;
 
 namespace Unicorn.IO {

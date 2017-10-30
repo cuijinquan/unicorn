@@ -4,7 +4,8 @@ using System.Collections.Generic;
 using Unicorn.Util;
 using UnityEngine;
 
-namespace Unicorn.Entities {
+namespace Unicorn.Game {
+	[DisallowMultipleComponent]
 	public sealed class Entity : MonoBehaviour {
 		[ThreadStatic]
 		private static EntityId _nextId;

@@ -2,7 +2,7 @@
 using System;
 using Unicorn.Util;
 
-namespace Unicorn.Entities {
+namespace Unicorn.Game {
 	public static class EntitySystem {
 		[ThreadStatic]
 		private static IEntitySystem _instance = null;

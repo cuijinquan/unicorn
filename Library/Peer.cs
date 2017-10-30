@@ -26,12 +26,12 @@ namespace Unicorn {
 		/// <summary>
 		/// Get a disposable that is disposed when the base of <see cref="ShuttingDown"/> is called.
 		/// </summary>
-		protected Disposable DisposeShutdown { get { return _disposeShutdown; } }
+		protected Disposable UntilShutdown { get { return _disposeShutdown; } }
 
 		/// <summary>
 		/// Get a disposable that is disposed when the base of <see cref="Stopped"/> is called.
 		/// </summary>
-		protected Disposable DisposeStopped { get { return _disposeStopped; } }
+		protected Disposable UntilStopped { get { return _disposeStopped; } }
 
 
 

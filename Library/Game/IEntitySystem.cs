@@ -1,7 +1,7 @@
 ﻿
 using Unicorn.Util;
 
-namespace Unicorn.Entities {
+namespace Unicorn.Game {
 	public interface IEntitySystem {
 		/// <summary>
 		/// Get a set of connections that are allowed as entity owners.
