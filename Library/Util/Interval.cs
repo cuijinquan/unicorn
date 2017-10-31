@@ -8,7 +8,7 @@ namespace Unicorn.Util {
 		public Interval(TimeSource source, float duration) {
 			_source = source;
 			_duration = duration;
-			_last = Timer.GetCurrentTime(source);
+			_last = float.NegativeInfinity;
 		}
 		
 		private readonly TimeSource _source;

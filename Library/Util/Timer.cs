@@ -51,6 +51,10 @@ namespace Unicorn.Util {
 			}
 		}
 
+		public static implicit operator float(Timer timer) {
+			return timer.Value;
+		}
+
 		public virtual TimerState State {
 			get { return _state; }
 			set {
