@@ -2,7 +2,6 @@
 using System;
 using System.IO;
 using System.Text;
-using Unicorn.Game;
 using UnityEngine;
 
 namespace Unicorn.IO {
@@ -36,10 +35,6 @@ namespace Unicorn.IO {
 			Write(value.y);
 			Write(value.z);
 			Write(value.w);
-		}
-
-		public void Write(EntityId value) {
-			Write(value.Value);
 		}
 	}
 }

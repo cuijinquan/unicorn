@@ -14,9 +14,7 @@ This is an early in-development version!
 + [x] Additional static network api.
 + [x] Fully observable connection sets &amp; subsets.
 + [x] Simple & fast io for serializing network data.
-+ [x] "Peers" for client and server api separation.
-+ [x] Method call routing using message ids.
-+ [x] Separate entity system.
++ [ ] Entity system including auto-generated api for sending network messages.
 
 <br/>
 

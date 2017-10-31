@@ -5,9 +5,10 @@ using Unicorn.Internal;
 using Unicorn.Util;
 using UnityEngine.Networking;
 using UnityEngine;
+using System.Net;
 
 namespace Unicorn {
-	public abstract class Router : IRouterInternal {
+	public abstract class Router : IRouterInternal, IDisposable {
 		public Router(RouterConfig config) {
 			if (config == null)
 				throw new ArgumentNullException("config");
@@ -87,7 +88,7 @@ namespace Unicorn {
 		/// <param name="sender"></param>
 		/// <param name="buffer"></param>
 		/// <param name="length"></param>
-		protected virtual void Receive(Connection sender, byte[] buffer, int length) { }
+		protected abstract void Receive(Connection sender, byte[] buffer, int length);
 
 
 
@@ -110,17 +111,32 @@ namespace Unicorn {
 		}
 
 		/// <summary>
+		/// Start a network server.
+		/// </summary>
+		/// <param name="minPort"></param>
+		/// <param name="maxPort"></param>
+		/// <param name="maxConnections"></param>
+		/// <param name="port"></param>
+		/// <returns></returns>
+		public bool StartServer(int minPort, int maxPort, int maxConnections, out int port) {
+			for (port = minPort; port < maxPort; port++)
+				if (StartServer(port, maxConnections))
+					return true;
+			return false;
+		}
+
+		/// <summary>
 		/// Connect to a server.
 		/// </summary>
 		/// <param name="ipAddress"></param>
 		/// <param name="port"></param>
-		public void Connect(string ipAddress, int port) {
+		public void Connect(IPAddress address, int port) {
 			if (_state != RouterState.None || _shuttingDown)
 				throw new InvalidOperationException();
 			_hostId = NetworkTransport.AddHost(new HostTopology(_connectionConfig, 1));
 
 			byte error;
-			_clientId = NetworkTransport.Connect(_hostId, ipAddress, port, 0, out error);
+			_clientId = NetworkTransport.Connect(_hostId, address.ToString(), port, 0, out error);
 			if (error == (byte)NetworkError.Ok) {
 				_state = RouterState.Client;
 				Started();
@@ -143,15 +159,39 @@ namespace Unicorn {
 			}
 		}
 
-		private void TryFinalizeShutdown() {
-			if ((_state == RouterState.Client || _shuttingDown) && _connections.Count == 0) {
-				_shuttingDown = false;
-				NetworkTransport.RemoveHost(_hostId);
-				_hostId = -1;
-				_clientId = -1;
+		/// <summary>
+		/// Immediately shutdown without notifying connections.
+		/// </summary>
+		public void ShutdownImmediate() {
+			if (_state != RouterState.None) {
 				try {
+					_shuttingDown = true;
+					ShuttingDown();
+
+					var connections = new LinkedList<Connection>(_connections);
+					foreach (var conn in connections)
+						((IConnectionInternal)conn).TransportLayerDisconnected();
+
+					NetworkTransport.RemoveHost(_hostId);
+					_hostId = -1;
+					_clientId = -1;
 					Stopped();
 				} finally {
+					_shuttingDown = false;
+					_state = RouterState.None;
+				}
+			}
+		}
+
+		private void TryFinalizeShutdown() {
+			if ((_state == RouterState.Client || _shuttingDown) && _connections.Count == 0) {
+				try {
+					NetworkTransport.RemoveHost(_hostId);
+					_hostId = -1;
+					_clientId = -1;
+					Stopped();
+				} finally {
+					_shuttingDown = false;
 					_state = RouterState.None;
 				}
 			}
@@ -213,6 +253,10 @@ namespace Unicorn {
 
 		int IRouterInternal.GetChannelId(int key) {
 			return _channelMap[key];
+		}
+
+		void IDisposable.Dispose() {
+			ShutdownImmediate();
 		}
 	}
 }

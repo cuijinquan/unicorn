@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Net;
 using Unicorn.Util;
 
 namespace Unicorn {
@@ -73,10 +74,10 @@ namespace Unicorn {
 		/// <summary>
 		/// Connect to a server.
 		/// </summary>
-		/// <param name="ipAddress"></param>
+		/// <param name="address"></param>
 		/// <param name="port"></param>
-		public static void Connect(string ipAddress, int port) {
-			Router.Connect(ipAddress, port);
+		public static void Connect(IPAddress address, int port) {
+			Router.Connect(address, port);
 		}
 
 		/// <summary>
