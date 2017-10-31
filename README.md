@@ -14,7 +14,6 @@ This is an early in-development version!
 + [x] Additional static network api.
 + [x] Fully observable connection sets &amp; subsets.
 + [x] Simple & fast io for serializing network data.
-+ [ ] Entity system including auto-generated api for sending network messages.
 
 <br/>
 
