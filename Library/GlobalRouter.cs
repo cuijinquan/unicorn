@@ -72,6 +72,18 @@ namespace Unicorn {
 		}
 
 		/// <summary>
+		/// Start a network server.
+		/// </summary>
+		/// <param name="minPort"></param>
+		/// <param name="maxPort"></param>
+		/// <param name="maxConnections"></param>
+		/// <param name="port"></param>
+		/// <returns></returns>
+		public static bool StartServer(int minPort, int maxPort, int maxConnections, out int port) {
+			return Router.StartServer(minPort, maxPort, maxConnections, out port);
+		}
+
+		/// <summary>
 		/// Connect to a server.
 		/// </summary>
 		/// <param name="address"></param>
