@@ -1,6 +1,6 @@
 ﻿
+# if UNITY_EDITOR
 using NUnit.Framework;
-using System;
 using System.Collections;
 using Unicorn.Util;
 using UnityEngine;
@@ -24,3 +24,4 @@ namespace Unicorn.PlayModeTests {
 		}
 	}
 }
+#endif
