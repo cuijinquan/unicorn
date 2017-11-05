@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Collections.Generic;
 using Unicorn.Entities.Internal;
 using Unicorn.IO;
 using UnityEngine;
@@ -7,69 +8,77 @@ using UnityObject = UnityEngine.Object;
 
 namespace Unicorn.Entities {
 	public class EntityRouter : Router {
-		[ThreadStatic]
 		private static EntityRouter _current;
 		public static EntityRouter Current { get { return _current; } }
 		
-		public EntityRouter(RouterConfig config, string rootEntity) : base(config) {
-			_rootEntitySource = rootEntity;
+		public static EntityRouter Require() {
+			if (_current == null)
+				throw new InvalidOperationException("An entity router is required.");
+			return _current;
+		}
+		
+		public EntityRouter(RouterConfig config) : this(config, null) { }
+		public EntityRouter(RouterConfig config, string managerSource) : base(config) {
+			if (_current != null)
+				Debug.LogWarning("Multiple entity routers instantiated.");
+
+			_current = this;
+			_managerSource = managerSource;
+		}
+		
+		private readonly string _managerSource;
+
+		public enum ClientControlCode : byte {
+			CreateEntity,
+			DestroyEntity,
+			SetEntityOwnership
 		}
 
-		private string _rootEntitySource;
-		
 		protected override void Started() {
 			base.Started();
-			if (_current != null)
-				Debug.LogError("Multiple game routers are used at the same time.");
-			_current = this;
-			EntityId.ResetPool();
-			if (Net.IsServer && _rootEntitySource != null) {
-				Entity.Create(_rootEntitySource).Group = Connections;
+			if (IsServer && !string.IsNullOrEmpty(_managerSource)) {
+				EntityIdPool.Reset();
+				var manager = Entity.Create(_managerSource);
+				manager.Group = Connections;
 			}
 		}
-		
+
 		protected override void Stopped() {
 			base.Stopped();
-			if (_current == this) {
-				_current = null;
-
-				foreach(var entity in Entity.All) {
-					UnityObject.Destroy(entity.gameObject);
-				}
+			foreach(var entity in new LinkedList<Entity>(Entity.All)) {
+				UnityObject.Destroy(entity.gameObject);
 			}
 		}
-		
+
 		protected override void Receive(Connection sender, byte[] buffer, int length) {
 			var payload = new MemoryReader(buffer, length);
-			var entityId = EntityId.ReadFrom(payload);
+			var entityId = payload.ReadEntityId();
 			if (entityId == EntityId.None) {
-				var controlCode = payload.ReadByte();
-				if (IsClient) {
-					switch((EntityControlCode)controlCode) {
-						case EntityControlCode.CreateEntity:
-							Entity.Create(EntityId.ReadFrom(payload), payload.ReadString(), payload.ReadVector3(), payload.ReadQuaternion());
+				if (IsServer) {
+					Debug.LogWarningFormat("Invalid server message.");
+				} else {
+					switch((ClientControlCode)payload.ReadByte()) {
+						case ClientControlCode.CreateEntity:
+							Entity.Create(payload.ReadEntityId(), payload.ReadString(), payload.ReadVector3(), payload.ReadQuaternion());
 							break;
 
-						case EntityControlCode.DestroyEntity:
-							Entity.Destroy(EntityId.ReadFrom(payload));
+						case ClientControlCode.DestroyEntity:
+							Entity.Destroy(payload.ReadEntityId());
 							break;
-
-						case EntityControlCode.SetEntityOwnership:
-							var isMine = payload.ReadBoolean();
-							Entity.Use(EntityId.ReadFrom(payload), entity => ((IEntityInternal)entity).SetOwnership(isMine));
+							
+						case ClientControlCode.SetEntityOwnership:
+							Entity.Use(payload.ReadEntityId(), entity => ((IEntityInternal)entity).SetLocalOwnership(payload.ReadBoolean()));
 							break;
 
 						default:
-							Debug.LogWarning(string.Format("Unknown client control code: {0}", controlCode));
+							Debug.LogWarning("Unknown client control code received.");
 							break;
 					}
-				} else {
-					Debug.LogWarning("Control code received on server.");
 				}
 			} else if (!Entity.Use(entityId, entity => {
 				((IEntityInternal)entity).Receive(sender, payload);
 			})) {
-				Debug.LogWarningFormat("Entity not found: {0}", entityId);
+				Debug.LogWarningFormat("Missing entity to receive message: {0}", entityId);
 			}
 		}
 	}

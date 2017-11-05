@@ -5,7 +5,7 @@ using System.Text;
 using UnityEngine;
 
 namespace Unicorn.IO {
-	public class DataWriter : BinaryWriter {
+	public partial class DataWriter : BinaryWriter {
 		public DataWriter(Stream output) : base(output, Encoding.UTF8) { }
 		
 		public void Write(Guid value) {

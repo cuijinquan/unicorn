@@ -5,7 +5,7 @@ using System.Text;
 using UnityEngine;
 
 namespace Unicorn.IO {
-	public class DataReader : BinaryReader {
+	public partial class DataReader : BinaryReader {
 		public DataReader(Stream input) : base(input, Encoding.UTF8) { }
 		
 		public Guid ReadGuid() {

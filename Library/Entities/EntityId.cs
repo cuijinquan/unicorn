@@ -1,31 +1,24 @@
 ﻿
-using System;
-using Unicorn.IO;
-
 namespace Unicorn.Entities {
-	public struct EntityId : IEquatable<EntityId>, IComparable<EntityId> {
+	using System;
+
+	public struct EntityId : IComparable<EntityId>, IEquatable<EntityId> {
 		public uint value;
 
-		public readonly static EntityId None = new EntityId();
-		
-		public override bool Equals(object obj) {
-			return obj is EntityId && ((EntityId)obj).value == value;
+		public override string ToString() {
+			return value.ToString();
+		}
+
+		public int CompareTo(EntityId other) {
+			return value.CompareTo(other.value);
 		}
 
 		public override int GetHashCode() {
 			unchecked { return (int)value; }
 		}
 
-		public void WriteTo(DataWriter writer) {
-			writer.Write(value);
-		}
-
-		public static EntityId ReadFrom(DataReader reader) {
-			return new EntityId { value = reader.ReadUInt32() };
-		}
-
-		public int CompareTo(EntityId other) {
-			return value.CompareTo(other.value);
+		public override bool Equals(object other) {
+			return other is EntityId && ((EntityId)other).value == value;
 		}
 
 		public bool Equals(EntityId other) {
@@ -40,16 +33,22 @@ namespace Unicorn.Entities {
 			return a.value != b.value;
 		}
 
+		public static readonly EntityId None = new EntityId();
+	}
+}
 
+namespace Unicorn.IO {
+	using Unicorn.Entities;
 
-		private static uint _next = 1;
-
-		public static EntityId Allocate() {
-			checked { return new EntityId { value = _next++ }; }
+	partial class DataWriter {
+		public void Write(EntityId value) {
+			Write(value.value);
 		}
+	}
 
-		public static void ResetPool() {
-			_next = 1;
+	partial class DataReader {
+		public EntityId ReadEntityId() {
+			return new EntityId { value = ReadUInt32() };
 		}
 	}
 }
