@@ -1,5 +1,4 @@
 ﻿
-using System;
 using Unicorn.IO;
 using Unicorn.Util;
 using UnityEngine;
@@ -9,6 +8,11 @@ namespace Unicorn.Entities {
 	[DisallowMultipleComponent]
 	public class NetworkSceneManager : GlobalEntityModule<NetworkSceneManager> {
 		private static SubSet<Connection> _clients;
+
+		[Tooltip("The scene to load after the server is started.")]
+		public string onlineScene = "";
+		[Tooltip("The scene to load after network is stopped.")]
+		public string offlineScene = "";
 
 		private enum ServerMessage : byte { SceneLoaded }
 		private enum ClientMessage : byte { LoadScene }
@@ -29,7 +33,16 @@ namespace Unicorn.Entities {
 						payload.Write(SceneManager.GetActiveScene().name);
 					});
 				});
+
+				if (!string.IsNullOrEmpty(onlineScene))
+					LoadScene(onlineScene);
 			}
+		}
+
+		protected override void OnDestroy() {
+			base.OnDestroy();
+			if (!string.IsNullOrEmpty(offlineScene))
+				SceneManager.LoadSceneAsync(offlineScene);
 		}
 
 		private void SceneLoaded(Scene scene, LoadSceneMode mode) {
