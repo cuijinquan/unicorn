@@ -3,10 +3,11 @@ using System;
 using System.Collections.Generic;
 using Unicorn.Entities.Internal;
 using Unicorn.IO;
+using Unicorn.Util;
 using UnityEngine;
 
 namespace Unicorn.Entities {
-	public class EntityModule<T> : EntityModule where T : EntityModule<T> {
+	public abstract class EntityModule<T> : EntityModule where T : EntityModule<T> {
 		private static SortedDictionary<EntityId, T> _map = new SortedDictionary<EntityId, T>();
 		public static IEnumerable<T> All { get { return _map.Values; } }
 		public static int Count { get { return _map.Count; } }
@@ -38,7 +39,7 @@ namespace Unicorn.Entities {
 	}
 
 	[RequireComponent(typeof(Entity))]
-	public class EntityModule : MonoBehaviour, IEntityModuleInternal {
+	public abstract class EntityModule : MonoBehaviour, IEntityModuleInternal {
 		private byte? _moduleId;
 
 		private Entity _entity;
@@ -49,7 +50,9 @@ namespace Unicorn.Entities {
 				return _entity;
 			}
 		}
-		
+
+		public Disposable UntilDestroy { get { return Entity.UntilDestroy; } }
+
 		public EntityId Id {
 			get {
 				var id = Entity.Id;
@@ -57,6 +60,54 @@ namespace Unicorn.Entities {
 					throw new InvalidOperationException("Unassigned entity id.");
 				return id;
 			}
+		}
+
+		public string Source {
+			get { return Entity.Source; }
+		}
+
+		public IReadonlyObservableSet<Connection> Group {
+			get { return Entity.Group; }
+			set { Entity.Group = value; }
+		}
+
+		public Set<Connection> OwnerSet {
+			get { return Entity.OwnerSet; }
+		}
+
+		public IReadonlyObservableSet<Connection> Owners {
+			get { return Entity.Owners; }
+			set { Entity.Owners = value; }
+		}
+
+		public bool IsMine {
+			get { return Entity.IsMine; }
+		}
+
+		
+
+		protected bool IsServer {
+			get { return EntityRouter.Require().IsServer; }
+		}
+		protected bool IsClient {
+			get { return EntityRouter.Require().IsClient; }
+		}
+		protected bool IsShuttingDown {
+			get { return EntityRouter.Require().IsShuttingDown; }
+		}
+
+
+
+		public void Send(Action<DataWriter> message) {
+			Send(0, message);
+		}
+
+		public void Send(int channelKey, Action<DataWriter> message) {
+			Send(EntityRouter.Require().Connections, message);
+		}
+
+		public void Send(IEnumerable<Connection> target, Action<DataWriter> message) {
+			Send(target, 0, message);
 		}
 
 		public void Send(IEnumerable<Connection> target, int channelKey, Action<DataWriter> message) {
@@ -79,7 +130,7 @@ namespace Unicorn.Entities {
 				((IEntityInternal)Entity).RemoveModule((byte)_moduleId);
 		}
 
-		protected virtual void Receive(Connection sender, DataReader payload) { }
+		protected abstract void Receive(Connection sender, DataReader payload);
 
 		void IEntityModuleInternal.Receive(Connection sender, DataReader payload) {
 			Receive(sender, payload);
