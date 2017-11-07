@@ -1,12 +1,12 @@
 ﻿
-using System;
-using System.Collections.Generic;
-using Unicorn.Entities.Internal;
-using Unicorn.IO;
-using Unicorn.Util;
-using UnityEngine;
-
 namespace Unicorn.Entities {
+	using System;
+	using System.Collections.Generic;
+	using Unicorn.Entities.Internal;
+	using Unicorn.IO;
+	using Unicorn.Util;
+	using UnityEngine;
+
 	public abstract class EntityModule<T> : EntityModule where T : EntityModule<T> {
 		private static SortedDictionary<EntityId, T> _map = new SortedDictionary<EntityId, T>();
 		public static IEnumerable<T> All { get { return _map.Values; } }
@@ -84,7 +84,7 @@ namespace Unicorn.Entities {
 			get { return Entity.IsMine; }
 		}
 
-		
+
 
 		protected bool IsServer {
 			get { return EntityRouter.Require().IsServer; }
@@ -94,6 +94,10 @@ namespace Unicorn.Entities {
 		}
 		protected bool IsShuttingDown {
 			get { return EntityRouter.Require().IsShuttingDown; }
+		}
+
+		public void SetOwner(Connection owner) {
+			Entity.SetOwner(owner);
 		}
 
 
@@ -134,6 +138,23 @@ namespace Unicorn.Entities {
 
 		void IEntityModuleInternal.Receive(Connection sender, DataReader payload) {
 			Receive(sender, payload);
+		}
+	}
+}
+
+namespace Unicorn.IO {
+	using Unicorn.Entities;
+	
+	partial class DataWriter {
+		public void WriteEntityModule<T>(T value) where T : EntityModule {
+			Write(value ? value.Entity : null);
+		}
+	}
+
+	partial class DataReader {
+		public T ReadEntityModule<T>() where T : EntityModule {
+			var entity = ReadEntity();
+			return entity ? entity.As<T>() : null;
 		}
 	}
 }

@@ -8,6 +8,7 @@ namespace Unicorn.Entities {
 	[DisallowMultipleComponent]
 	public class NetworkSceneManager : GlobalEntityModule<NetworkSceneManager> {
 		private static SubSet<Connection> _clients;
+		public static IReadonlyObservableSet<Connection> Clients { get { return _clients; } }
 
 		[Tooltip("The scene to load after the server is started.")]
 		public string onlineScene = "";
@@ -19,24 +20,24 @@ namespace Unicorn.Entities {
 
 		protected override void Awake() {
 			base.Awake();
-
 			DontDestroyOnLoad(gameObject);
-			_clients = new SubSet<Connection>(Group);
-
-			SceneManager.sceneLoaded += SceneLoaded;
-			UntilDestroy.Add(() => SceneManager.sceneLoaded -= SceneLoaded);
 
 			if (IsServer) {
+				_clients = new SubSet<Connection>(Group);
+
 				Group.Added(UntilDestroy, conn => {
 					Send(conn, payload => {
 						payload.Write((byte)ClientMessage.LoadScene);
 						payload.Write(SceneManager.GetActiveScene().name);
 					});
 				});
-
-				if (!string.IsNullOrEmpty(onlineScene))
-					LoadScene(onlineScene);
 			}
+
+			SceneManager.sceneLoaded += SceneLoaded;
+			UntilDestroy.Add(() => SceneManager.sceneLoaded -= SceneLoaded);
+
+			if (IsServer && !string.IsNullOrEmpty(onlineScene))
+				LoadScene(onlineScene);
 		}
 
 		protected override void OnDestroy() {

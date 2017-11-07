@@ -79,6 +79,12 @@ namespace Unicorn.Entities {
 			return component;
 		}
 
+		public void SetOwner(Connection owner) {
+			OwnerSet.Clear();
+			OwnerSet.Add(owner);
+			Owners = OwnerSet;
+		}
+
 
 
 		private static SortedDictionary<EntityId, Entity> _map = new SortedDictionary<EntityId, Entity>();
@@ -132,7 +138,7 @@ namespace Unicorn.Entities {
 						});
 					});
 
-					_ownerSet = new BacklogSubSet<Connection>(_group);
+					_ownerSet = new BacklogSubSet<Connection>(_group, Connection.IsDead);
 
 					_owners = new SetProxy<Connection>(_ownerSet);
 					_owners.Added(UntilDestroy, conn => {
@@ -236,11 +242,11 @@ namespace Unicorn.IO {
 
 	partial class DataWriter {
 		public void Write(Entity entity) {
-			if (entity == null) {
-				Write(false);
-			} else {
+			if (entity) {
 				Write(true);
 				Write(entity.Id);
+			} else {
+				Write(false);
 			}
 		}
 	}
