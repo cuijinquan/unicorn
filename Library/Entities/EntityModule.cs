@@ -2,45 +2,21 @@
 namespace Unicorn.Entities {
 	using System;
 	using System.Collections.Generic;
+	using System.Reflection;
 	using Unicorn.Entities.Internal;
 	using Unicorn.IO;
 	using Unicorn.Util;
 	using UnityEngine;
-
-	public abstract class EntityModule<T> : EntityModule where T : EntityModule<T> {
-		private static SortedDictionary<EntityId, T> _map = new SortedDictionary<EntityId, T>();
-		public static IEnumerable<T> All { get { return _map.Values; } }
-		public static int Count { get { return _map.Count; } }
-
-		public static bool Use(EntityId id, Action<T> action) {
-			T module;
-			if (_map.TryGetValue(id, out module)) {
-				action(module);
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		public static T Find(EntityId id) {
-			T module;
-			return _map.TryGetValue(id, out module) ? module : null;
-		}
-
-		protected override void Awake() {
-			base.Awake();
-			_map[Id] = (T)this;
-		}
-
-		protected override void OnDestroy() {
-			_map.Remove(Id);
-			base.OnDestroy();
-		}
-	}
-
+	
 	[RequireComponent(typeof(Entity))]
-	public abstract class EntityModule : MonoBehaviour, IEntityModuleInternal {
+	public abstract class EntityModule<T> : MonoBehaviour, IEntityModuleInternal where T : EntityModule<T> {
 		private byte? _moduleId;
+		private SortedDictionary<ushort, Action<Message>> _endpoints;
+
+		private static SortedDictionary<ushort, MethodInfo> _serverEndpointCache;
+		private static SortedDictionary<ushort, MethodInfo> _clientEndpointCache;
+
+		
 
 		private Entity _entity;
 		public Entity Entity {
@@ -102,19 +78,23 @@ namespace Unicorn.Entities {
 
 
 
-		public void Send(Action<DataWriter> message) {
+		protected void Send(MessageWriter message) {
 			Send(0, message);
 		}
 
-		public void Send(int channelKey, Action<DataWriter> message) {
-			Send(EntityRouter.Require().Connections, message);
+		protected void Send(int channelKey, MessageWriter message) {
+			if (IsServer) {
+				Send(Group, channelKey, message);
+			} else {
+				Send(EntityRouter.Current.Connections, channelKey, message);
+			}
 		}
 
-		public void Send(IEnumerable<Connection> target, Action<DataWriter> message) {
+		protected void Send(IEnumerable<Connection> target, MessageWriter message) {
 			Send(target, 0, message);
 		}
 
-		public void Send(IEnumerable<Connection> target, int channelKey, Action<DataWriter> message) {
+		protected void Send(IEnumerable<Connection> target, int channelKey, MessageWriter message) {
 			if (_moduleId == null)
 				throw new InvalidOperationException("Unassigned module id.");
 
@@ -125,19 +105,63 @@ namespace Unicorn.Entities {
 			});
 		}
 
+		protected void Endpoint(DataWriter payload, object code) {
+			payload.Write(Convert.ToUInt16(code));
+		}
+
 		protected virtual void Awake() {
 			_moduleId = ((IEntityInternal)Entity).AddModule(this);
+			_endpoints = new SortedDictionary<ushort, Action<Message>>();
+			if (IsServer) {
+				CollectEndpoints(ref _serverEndpointCache);
+			} else {
+				CollectEndpoints(ref _clientEndpointCache);
+			}
 		}
+
+		private void CollectEndpoints(ref SortedDictionary<ushort, MethodInfo> endpointCache) {
+			if (endpointCache == null) {
+				endpointCache = new SortedDictionary<ushort, MethodInfo>();
+				foreach (var method in GetMethods()) {
+					var attrs = method.GetCustomAttributes(typeof(EndpointAttribute), true);
+					if (attrs.Length > 0) {
+						var attr = (EndpointAttribute)attrs[0];
+						if (attr.IsServerEndpoint == IsServer) {
+							endpointCache.Add(attr.Code, method);
+						}
+					}
+				}
+			}
+
+			foreach(var pair in endpointCache) {
+				_endpoints.Add(pair.Key, (Action<Message>)Delegate.CreateDelegate(typeof(Action<Message>), this, pair.Value));
+			}
+		}
+
+		private IEnumerable<MethodInfo> GetMethods() {
+			var flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+			for (var type = GetType(); type != null; type = type.BaseType) {
+				foreach(var method in type.GetMethods(flags)) {
+					yield return method;
+				}
+			}
+		}
+
+		
 
 		protected virtual void OnDestroy() {
 			if (_moduleId != null)
 				((IEntityInternal)Entity).RemoveModule((byte)_moduleId);
 		}
-
-		protected abstract void Receive(Connection sender, DataReader payload);
-
-		void IEntityModuleInternal.Receive(Connection sender, DataReader payload) {
-			Receive(sender, payload);
+		
+		void IEntityModuleInternal.Receive(Message msg) {
+			var code = msg.ReadUInt16();
+			Action<Message> endpoint;
+			if (_endpoints.TryGetValue(code, out endpoint)) {
+				endpoint(msg);
+			} else {
+				Debug.LogWarningFormat("Unknown endpoint code or wrong peer state: {0}", code);
+			}
 		}
 	}
 }
@@ -146,13 +170,13 @@ namespace Unicorn.IO {
 	using Unicorn.Entities;
 	
 	partial class DataWriter {
-		public void WriteEntityModule<T>(T value) where T : EntityModule {
+		public void WriteEntityModule<T>(T value) where T : EntityModule<T> {
 			Write(value ? value.Entity : null);
 		}
 	}
 
 	partial class DataReader {
-		public T ReadEntityModule<T>() where T : EntityModule {
+		public T ReadEntityModule<T>() where T : EntityModule<T> {
 			var entity = ReadEntity();
 			return entity ? entity.As<T>() : null;
 		}

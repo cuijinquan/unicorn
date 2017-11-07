@@ -31,10 +31,8 @@ namespace Unicorn.PlayModeTests {
 		private List<Guid> _messages = new List<Guid>();
 		public List<Guid> Messages { get { return _messages; } }
 		
-		protected override void Receive(Connection sender, byte[] buffer, int length) {
-			using (var reader = new MemoryReader(buffer, length)) {
-				_messages.Add(reader.ReadGuid());
-			}
+		protected override void Receive(Message msg) {
+			_messages.Add(msg.ReadGuid());
 		}
 	}
 }

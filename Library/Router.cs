@@ -6,6 +6,7 @@ using Unicorn.Util;
 using UnityEngine.Networking;
 using UnityEngine;
 using System.Net;
+using Unicorn.IO;
 
 namespace Unicorn {
 	public abstract class Router : IRouterInternal, IDisposable {
@@ -85,10 +86,8 @@ namespace Unicorn {
 		/// <summary>
 		/// Called to handle inbound messages.
 		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="buffer"></param>
-		/// <param name="length"></param>
-		protected abstract void Receive(Connection sender, byte[] buffer, int length);
+		/// <param name="msg"></param>
+		protected abstract void Receive(Message msg);
 
 
 
@@ -236,7 +235,7 @@ namespace Unicorn {
 								buffer = new byte[length];
 
 							} else if (_connectionMap.TryGetValue(connId, out conn)) {
-								Receive(conn, buffer, length);
+								Receive(new Message(conn, buffer, length));
 
 							} else {
 								Debug.LogWarningFormat("Unknown connection: {0}", connId);

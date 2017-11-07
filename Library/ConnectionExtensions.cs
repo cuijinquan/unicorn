@@ -5,11 +5,11 @@ using Unicorn.IO;
 
 namespace Unicorn {
 	public static class ConnectionExtensions {
-		public static void Send(this IEnumerable<Connection> target, Action<DataWriter> message) {
+		public static void Send(this IEnumerable<Connection> target, MessageWriter message) {
 			Send(target, 0, message);
 		}
 
-		public static void Send(this IEnumerable<Connection> target, int channelKey, Action<DataWriter> message) {
+		public static void Send(this IEnumerable<Connection> target, int channelKey, MessageWriter message) {
 			var payload = new MemoryWriter();
 			message(payload);
 			var buffer = payload.GetBuffer();

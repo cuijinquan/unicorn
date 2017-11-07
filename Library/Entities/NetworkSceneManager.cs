@@ -1,88 +1,65 @@
 ﻿
 using Unicorn.IO;
 using Unicorn.Util;
-using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace Unicorn.Entities {
-	[DisallowMultipleComponent]
-	public class NetworkSceneManager : GlobalEntityModule<NetworkSceneManager> {
+	public class NetworkSceneManager : EntityModule<NetworkSceneManager> {
 		private static SubSet<Connection> _clients;
 		public static IReadonlyObservableSet<Connection> Clients { get { return _clients; } }
-
-		[Tooltip("The scene to load after the server is started.")]
-		public string onlineScene = "";
-		[Tooltip("The scene to load after network is stopped.")]
-		public string offlineScene = "";
-
-		private enum ServerMessage : byte { SceneLoaded }
-		private enum ClientMessage : byte { LoadScene }
+		
+		private enum Msg : ushort {
+			LoadScene,
+			SceneLoaded
+		}
 
 		protected override void Awake() {
 			base.Awake();
-			DontDestroyOnLoad(gameObject);
-
-			if (IsServer) {
-				_clients = new SubSet<Connection>(Group);
-
-				Group.Added(UntilDestroy, conn => {
-					Send(conn, payload => {
-						payload.Write((byte)ClientMessage.LoadScene);
-						payload.Write(SceneManager.GetActiveScene().name);
-					});
-				});
-			}
+			_clients = new SubSet<Connection>(EntityRouter.Current.Connections);
 
 			SceneManager.sceneLoaded += SceneLoaded;
 			UntilDestroy.Add(() => SceneManager.sceneLoaded -= SceneLoaded);
 
-			if (IsServer && !string.IsNullOrEmpty(onlineScene))
-				LoadScene(onlineScene);
-		}
-
-		protected override void OnDestroy() {
-			base.OnDestroy();
-			if (!string.IsNullOrEmpty(offlineScene))
-				SceneManager.LoadSceneAsync(offlineScene);
+			Group.Added(UntilDestroy, conn => {
+				Send(conn, MsgLoadScene(SceneManager.GetActiveScene().name));
+			});
 		}
 
 		private void SceneLoaded(Scene scene, LoadSceneMode mode) {
 			if (IsServer) {
-				Send(Group, payload => {
-					payload.Write((byte)ClientMessage.LoadScene);
-					payload.Write(scene.name);
-				});
+				Send(MsgLoadScene(scene.name));
 			} else {
-				Send(payload => {
-					payload.Write((byte)ServerMessage.SceneLoaded);
-					payload.Write(scene.name);
-				});
+				Send(MsgSceneLoaded(scene.name));
 			}
 		}
 
-		protected virtual void LoadScene(string name) {
-			SceneManager.LoadSceneAsync(name);
+		[Client(Msg.LoadScene)]
+		private void LoadScene(Message msg) {
+			SceneManager.LoadSceneAsync(msg.ReadString());
 		}
 
-		protected override void Receive(Connection sender, DataReader payload) {
-			if (IsServer) {
-				switch((ServerMessage)payload.ReadByte()) {
-					case ServerMessage.SceneLoaded:
-						var sceneName = payload.ReadString();
-						if (sceneName == SceneManager.GetActiveScene().name) {
-							_clients.Add(sender);
-						} else {
-							_clients.Remove(sender);
-						}
-						break;
-				}
+		[Server(Msg.SceneLoaded)]
+		private void SceneLoaded(Message msg) {
+			var sceneName = msg.ReadString();
+			if (sceneName == SceneManager.GetActiveScene().name) {
+				_clients.Add(msg.Sender);
 			} else {
-				switch((ClientMessage)payload.ReadByte()) {
-					case ClientMessage.LoadScene:
-						LoadScene(payload.ReadString());
-						break;
-				}
+				_clients.Remove(msg.Sender);
 			}
+		}
+		
+		private MessageWriter MsgLoadScene(string name) {
+			return message => {
+				Endpoint(message, Msg.LoadScene);
+				message.Write(name);
+			};
+		}
+
+		private MessageWriter MsgSceneLoaded(string name) {
+			return message => {
+				Endpoint(message, Msg.SceneLoaded);
+				message.Write(name);
+			};
 		}
 	}
 }

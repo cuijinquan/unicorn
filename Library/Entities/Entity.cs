@@ -209,11 +209,11 @@ namespace Unicorn.Entities {
 			return Use(id, entity => Destroy(entity.gameObject));
 		}
 
-		void IEntityInternal.Receive(Connection sender, DataReader payload) {
-			var moduleId = payload.ReadByte();
+		void IEntityInternal.Receive(Message msg) {
+			var moduleId = msg.ReadByte();
 			IEntityModuleInternal module;
 			if (_modules.TryGetValue(moduleId, out module)) {
-				module.Receive(sender, payload);
+				module.Receive(msg);
 			} else {
 				Debug.LogWarningFormat("Missing entity module {0} on entity: {1}", moduleId, gameObject.name);
 			}

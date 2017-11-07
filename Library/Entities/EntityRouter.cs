@@ -50,24 +50,23 @@ namespace Unicorn.Entities {
 			}
 		}
 
-		protected override void Receive(Connection sender, byte[] buffer, int length) {
-			var payload = new MemoryReader(buffer, length);
-			var entityId = payload.ReadEntityId();
+		protected override void Receive(Message msg) {
+			var entityId = msg.ReadEntityId();
 			if (entityId == EntityId.None) {
 				if (IsServer) {
 					Debug.LogWarningFormat("Invalid server message.");
 				} else {
-					switch((ClientControlCode)payload.ReadByte()) {
+					switch((ClientControlCode)msg.ReadByte()) {
 						case ClientControlCode.CreateEntity:
-							Entity.Create(payload.ReadEntityId(), payload.ReadString(), payload.ReadVector3(), payload.ReadQuaternion());
+							Entity.Create(msg.ReadEntityId(), msg.ReadString(), msg.ReadVector3(), msg.ReadQuaternion());
 							break;
 
 						case ClientControlCode.DestroyEntity:
-							Entity.Destroy(payload.ReadEntityId());
+							Entity.Destroy(msg.ReadEntityId());
 							break;
 							
 						case ClientControlCode.SetEntityOwnership:
-							Entity.Use(payload.ReadEntityId(), entity => ((IEntityInternal)entity).SetLocalOwnership(payload.ReadBoolean()));
+							Entity.Use(msg.ReadEntityId(), entity => ((IEntityInternal)entity).SetLocalOwnership(msg.ReadBoolean()));
 							break;
 
 						default:
@@ -76,7 +75,7 @@ namespace Unicorn.Entities {
 					}
 				}
 			} else if (!Entity.Use(entityId, entity => {
-				((IEntityInternal)entity).Receive(sender, payload);
+				((IEntityInternal)entity).Receive(msg);
 			})) {
 				Debug.LogWarningFormat("Missing entity to receive message: {0}", entityId);
 			}
