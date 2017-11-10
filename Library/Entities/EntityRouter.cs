@@ -10,13 +10,13 @@ namespace Unicorn.Entities {
 	public class EntityRouter : Router {
 		private static EntityRouter _current;
 		public static EntityRouter Current { get { return _current; } }
-		
+
 		public static EntityRouter Require() {
 			if (_current == null)
 				throw new InvalidOperationException("An entity router is required.");
 			return _current;
 		}
-		
+
 		public EntityRouter(RouterConfig config) : this(config, null) { }
 		public EntityRouter(RouterConfig config, string managerSource) : base(config) {
 			if (_current != null)
@@ -25,7 +25,7 @@ namespace Unicorn.Entities {
 			_current = this;
 			_managerSource = managerSource;
 		}
-		
+
 		private readonly string _managerSource;
 
 		public enum ClientControlCode : byte {
@@ -64,7 +64,7 @@ namespace Unicorn.Entities {
 						case ClientControlCode.DestroyEntity:
 							Entity.Destroy(msg.ReadEntityId());
 							break;
-							
+
 						case ClientControlCode.SetEntityOwnership:
 							Entity.Use(msg.ReadEntityId(), entity => ((IEntityInternal)entity).SetLocalOwnership(msg.ReadBoolean()));
 							break;

@@ -45,8 +45,6 @@ namespace Unicorn.Entities {
 			get {
 				if (_ownerSet == null)
 					throw new InvalidOperationException("Not supported on clients.");
-				if (_group.Target != _ownerSet)
-					Debug.LogWarningFormat("An entity's owner set is used, but it's not used: {0}", gameObject.name);
 				return _ownerSet;
 			}
 		}
@@ -118,6 +116,9 @@ namespace Unicorn.Entities {
 				_source = _nextSource;
 				_map[_id] = this;
 
+				_nextId = EntityId.None;
+				_nextSource = null;
+
 				if (EntityRouter.Require().IsServer) {
 					_group = new SetProxy<Connection>();
 					_group.Added(UntilDestroy, conn => {
@@ -188,7 +189,7 @@ namespace Unicorn.Entities {
 				throw new ArgumentOutOfRangeException("id");
 			if (source == null)
 				throw new ArgumentNullException("source");
-
+			
 			var res = Resources.Load<GameObject>(source);
 			if (!res)
 				throw new MissingReferenceException(string.Format("Missing resource: {0}", source));

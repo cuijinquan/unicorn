@@ -16,6 +16,51 @@ namespace Unicorn.Entities {
 		private static SortedDictionary<ushort, MethodInfo> _serverEndpointCache;
 		private static SortedDictionary<ushort, MethodInfo> _clientEndpointCache;
 
+		private static T _current;
+		private static SortedDictionary<EntityId, T> _instances = new SortedDictionary<EntityId, T>();
+
+		public static T Current { get { return _current; } }
+		public static T Require() {
+			if (!_current)
+				throw new InvalidOperationException(string.Format("Missing or untracked global entity module: {0}", typeof(T).Name));
+			return _current;
+		}
+
+		public static IEnumerable<T> All { get { return _instances.Values; } }
+		public static int Count { get { return _instances.Count; } }
+
+		public static bool Use(EntityId id, Action<T> action) {
+			T instance;
+			if (_instances.TryGetValue(id, out instance)) {
+				action(instance);
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+		public static T Find(EntityId id) {
+			T instance;
+			return _instances.TryGetValue(id, out instance) ? instance : null;
+		}
+
+		public static bool Use(Predicate<T> query, Action<T> action) {
+			foreach (var instance in All) {
+				if (query(instance)) {
+					action(instance);
+					return true;
+				}
+			}
+			return false;
+		}
+
+		public static T Find(Predicate<T> query) {
+			foreach(var instance in All)
+				if (query(instance))
+					return instance;
+			return null;
+		}
+
 		
 
 		private Entity _entity;
@@ -74,6 +119,12 @@ namespace Unicorn.Entities {
 
 		public void SetOwner(Connection owner) {
 			Entity.SetOwner(owner);
+		}
+		
+
+
+		protected void TrackInstance() {
+			_current = _instances[Id] = (T)this;
 		}
 
 
@@ -171,14 +222,18 @@ namespace Unicorn.IO {
 	
 	partial class DataWriter {
 		public void WriteEntityModule<T>(T value) where T : EntityModule<T> {
-			Write(value ? value.Entity : null);
+			if (value) {
+				Write(true);
+				Write(value.Id);
+			} else {
+				Write(false);
+			}
 		}
 	}
 
 	partial class DataReader {
 		public T ReadEntityModule<T>() where T : EntityModule<T> {
-			var entity = ReadEntity();
-			return entity ? entity.As<T>() : null;
+			return ReadBoolean() ? EntityModule<T>.Find(ReadEntityId()) : null;
 		}
 	}
 }
