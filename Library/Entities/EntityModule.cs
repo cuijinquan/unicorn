@@ -2,6 +2,7 @@
 namespace Unicorn.Entities {
 	using System;
 	using System.Collections.Generic;
+	using System.IO;
 	using System.Reflection;
 	using Unicorn.Entities.Internal;
 	using Unicorn.IO;
@@ -206,7 +207,14 @@ namespace Unicorn.Entities {
 		}
 		
 		void IEntityModuleInternal.Receive(Message msg) {
-			var code = msg.ReadUInt16();
+			ushort code;
+			try {
+				code = msg.ReadUInt16();
+			} catch(EndOfStreamException) {
+				Debug.LogWarningFormat("No message code could be read. Use Entity.Endpoint(..) to write an endpoint code.");
+				return;
+			}
+
 			Action<Message> endpoint;
 			if (_endpoints.TryGetValue(code, out endpoint)) {
 				endpoint(msg);

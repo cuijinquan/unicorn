@@ -40,7 +40,7 @@ namespace Unicorn.Entities {
 			}
 		}
 
-		private BacklogSubSet<Connection> _ownerSet;
+		private SubSet<Connection> _ownerSet;
 		public Set<Connection> OwnerSet {
 			get {
 				if (_ownerSet == null)
@@ -130,6 +130,15 @@ namespace Unicorn.Entities {
 							p.Write(transform.position);
 							p.Write(transform.rotation);
 						});
+
+						if (_owners.Contains(conn)) {
+							conn.Send(p => {
+								p.Write(EntityId.None);
+								p.Write((byte)EntityRouter.ClientControlCode.SetEntityOwnership);
+								p.Write(_id);
+								p.Write(true);
+							});
+						}
 					});
 					_group.Removed(UntilDestroy, conn => {
 						conn.Send(p => {
@@ -139,24 +148,28 @@ namespace Unicorn.Entities {
 						});
 					});
 
-					_ownerSet = new BacklogSubSet<Connection>(_group, Connection.IsDead);
+					_ownerSet = new SubSet<Connection>(EntityRouter.Require().Connections);
 
 					_owners = new SetProxy<Connection>(_ownerSet);
 					_owners.Added(UntilDestroy, conn => {
-						conn.Send(p => {
-							p.Write(EntityId.None);
-							p.Write((byte)EntityRouter.ClientControlCode.SetEntityOwnership);
-							p.Write(_id);
-							p.Write(true);
-						});
+						if (_group.Contains(conn)) {
+							conn.Send(p => {
+								p.Write(EntityId.None);
+								p.Write((byte)EntityRouter.ClientControlCode.SetEntityOwnership);
+								p.Write(_id);
+								p.Write(true);
+							});
+						}
 					});
 					_owners.Removed(UntilDestroy, conn => {
-						conn.Send(p => {
-							p.Write(EntityId.None);
-							p.Write((byte)EntityRouter.ClientControlCode.SetEntityOwnership);
-							p.Write(_id);
-							p.Write(false);
-						});
+						if (_group.Contains(conn)) {
+							conn.Send(p => {
+								p.Write(EntityId.None);
+								p.Write((byte)EntityRouter.ClientControlCode.SetEntityOwnership);
+								p.Write(_id);
+								p.Write(false);
+							});
+						}
 					});
 				} else {
 					_isMine = false;
@@ -221,7 +234,10 @@ namespace Unicorn.Entities {
 		}
 
 		void IEntityInternal.SetLocalOwnership(bool isMine) {
-			_isMine = isMine;
+			if (_isMine != isMine) {
+				_isMine = isMine;
+				SendMessage("EntityOwnershipChanged", isMine, SendMessageOptions.DontRequireReceiver);
+			}
 		}
 
 		byte IEntityInternal.AddModule(IEntityModuleInternal module) {
