@@ -126,6 +126,9 @@ namespace Unicorn.Entities {
 
 		protected void TrackInstance() {
 			_current = _instances[Id] = (T)this;
+			UntilDestroy.Add(() => {
+				_instances.Remove(Id);
+			});
 		}
 
 
