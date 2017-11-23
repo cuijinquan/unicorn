@@ -145,6 +145,15 @@ namespace Unicorn {
 		}
 
 		/// <summary>
+		/// Connect to a server.
+		/// </summary>
+		/// <param name="hostNameOrAddress"></param>
+		/// <param name="port"></param>
+		public void Connect(string hostNameOrAddress, int port) {
+			Connect(Dns.GetHostEntry(hostNameOrAddress).AddressList[0], port);
+		}
+
+		/// <summary>
 		/// Send disconnect request to all connections &amp; stop after all connections have been closed.
 		/// </summary>
 		public void Shutdown() {

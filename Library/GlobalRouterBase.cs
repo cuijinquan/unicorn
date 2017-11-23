@@ -4,14 +4,14 @@ using System.Net;
 using Unicorn.Util;
 
 namespace Unicorn {
-	public class GlobalRouter<T> where T : Router {
-		protected GlobalRouter() { throw new NotSupportedException(); }
+	public abstract class GlobalRouterBase<T> where T : Router {
+		protected GlobalRouterBase() { throw new NotSupportedException(); }
 
 		private static T _router;
 		/// <summary>
 		/// Get the current global router instance.
 		/// </summary>
-		public static T Router {
+		protected static T Router {
 			get {
 				if (_router == null)
 					throw new InvalidOperationException("No global router is initialized.");
@@ -93,23 +93,37 @@ namespace Unicorn {
 		}
 
 		/// <summary>
+		/// Connect to a server.
+		/// </summary>
+		/// <param name="hostNameOrAddress"></param>
+		/// <param name="port"></param>
+		public static void Connect(string hostNameOrAddress, int port) {
+			Router.Connect(hostNameOrAddress, port);
+		}
+
+		/// <summary>
 		/// Send disconnect request to all connections &amp; stop after all connections have been closed.
 		/// </summary>
 		public static void Shutdown() {
 			Router.Shutdown();
 		}
 
-
+		/// <summary>
+		/// Immediately shutdown without notifying connections.
+		/// </summary>
+		public static void ShutdownImmediate() {
+			Router.ShutdownImmediate();
+		}
 
 		/// <summary>
 		/// Call once on application startup to initialize a global router instance.
 		/// </summary>
 		/// <param name="router"></param>
 		protected static void Initialize(T router) {
-			if (_router != null)
-				throw new InvalidOperationException("Another global router is already initialized.");
 			if (router == null)
 				throw new ArgumentNullException("router");
+			if (_router != null)
+				_router.ShutdownImmediate();
 			_router = router;
 		}
 	}
