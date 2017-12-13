@@ -9,7 +9,7 @@ namespace Unicorn.IO {
 		}
 
 		private readonly MemoryStream _memory;
-		
+
 		public int Length { get { checked { return (int)_memory.Length; } } }
 
 		public byte[] GetBuffer() {

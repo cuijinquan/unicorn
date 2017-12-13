@@ -14,7 +14,7 @@ namespace Unicorn {
 			_channelMap = new SortedDictionary<int, int>();
 			_connectionConfig = new ConnectionConfig();
 		}
-		
+
 		private SortedDictionary<int, int> _channelMap;
 		private readonly ConnectionConfig _connectionConfig;
 

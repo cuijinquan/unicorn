@@ -10,11 +10,11 @@ namespace Unicorn.Util {
 			_duration = duration;
 			_last = float.NegativeInfinity;
 		}
-		
+
 		private readonly TimeSource _source;
 		private readonly float _duration;
 		private float _last;
-		
+
 		public bool Update() {
 			var current = Timer.GetCurrentTime(_source);
 			if (current > _last + _duration) {

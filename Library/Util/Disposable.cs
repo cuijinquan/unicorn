@@ -13,7 +13,7 @@ namespace Unicorn.Util {
 		public Disposable() {
 			_children = new HashSet<Action>();
 		}
-		
+
 		/// <summary>
 		/// Create a disposable and add an action to invoke when disposed.
 		/// </summary>
@@ -46,7 +46,7 @@ namespace Unicorn.Util {
 				_children.Add(disposable.Dispose);
 			return this;
 		}
-		
+
 		/// <summary>
 		/// </summary>
 		/// <returns>This disposable.</returns>
