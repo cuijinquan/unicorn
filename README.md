@@ -24,5 +24,4 @@ This is an early in-development version!
 git submodule add https://github.com/unicorn-layer/unicorn Assets/Unicorn
 ```
 
-## Documentation
-Documentation will be available later.
+## [Documentation](Docs)
