@@ -29,6 +29,14 @@ namespace Unicorn.Tests.Util {
 			Assert.True(super.Remove(0));
 			Assert.False(sub.Contains(0));
 			Assert.False(sub.Remove(0));
+
+			super.Add(3);
+			super.Add(5);
+			sub.Add(3);
+			sub.Add(5);
+			super.RemoveWhere(n => n < 4);
+			Assert.False(sub.Contains(3));
+			Assert.True(sub.Contains(5));
 		}
 	}
 }

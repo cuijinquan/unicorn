@@ -42,6 +42,16 @@ namespace Unicorn.Util {
 				return false;
 			}
 		}
+
+		public virtual int RemoveWhere(Predicate<T> match) {
+			return _items.RemoveWhere(item => {
+				if (match(item)) {
+					_removed.Use(r => r(item));
+					return true;
+				}
+				return false;
+			});
+		}
 		
 		public virtual void Clear() {
 			_items.RemoveWhere(item => {

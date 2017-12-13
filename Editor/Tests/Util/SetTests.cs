@@ -27,6 +27,12 @@ namespace Unicorn.Tests.Util {
 			Assert.AreEqual(2, set.Count);
 			set.Clear();
 			Assert.AreEqual(0, set.Count);
+
+			set.Add(5);
+			set.Add(3);
+			Assert.AreEqual(1, set.RemoveWhere(n => n < 4));
+			Assert.AreEqual(1, set.Count);
+			Assert.True(set.Contains(5));
 		}
 
 		[Test]
@@ -54,6 +60,13 @@ namespace Unicorn.Tests.Util {
 
 			observer.Dispose();
 			set.Remove(1);
+			Assert.AreEqual(1, removed);
+
+			removed = 0;
+			set.Add(5);
+			set.Add(3);
+			observer = set.Removed(item => removed++, false);
+			Assert.AreEqual(1, set.RemoveWhere(n => n < 4));
 			Assert.AreEqual(1, removed);
 		}
 
