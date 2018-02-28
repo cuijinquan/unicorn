@@ -44,18 +44,22 @@ namespace Unicorn {
 		/// Get a meta collection for this connection.
 		/// </summary>
 		public Meta Meta { get { return _meta; } }
+
 		/// <summary>
 		/// True if connected.
 		/// </summary>
 		public bool Connected { get { return !_disconnected; } }
+
 		/// <summary>
 		/// The transport layer connection id.
 		/// </summary>
 		public int Id { get { return _id; } }
+
 		/// <summary>
 		/// The remote address.
 		/// </summary>
 		public string RemoteAddress { get { return _remoteAddress; } }
+
 		/// <summary>
 		/// The remote port.
 		/// </summary>
