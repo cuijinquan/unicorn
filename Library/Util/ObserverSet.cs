@@ -19,9 +19,21 @@ namespace Unicorn.Util {
 		/// </summary>
 		/// <param name="observer"></param>
 		/// <param name="weak">True, to use a weak reference.</param>
-		public IDisposable Add(T observer, bool weak) {
+		public IDisposable Add(T observer) {
 			Remove(observer);
-			var link = weak ? (ILink)new WeakLink(observer) : new Link(observer);
+			var link = new Link(observer);
+			_links.Add(link);
+			return new Disposable(() => Remove(observer));
+		}
+
+		/// <summary>
+		/// Add an observer.
+		/// </summary>
+		/// <param name="observer"></param>
+		/// <param name="weak">True, to use a weak reference.</param>
+		public IDisposable AddWeak(T observer) {
+			Remove(observer);
+			var link = new WeakLink(observer);
 			_links.Add(link);
 			return new Disposable(() => Remove(observer));
 		}

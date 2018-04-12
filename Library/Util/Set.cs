@@ -60,12 +60,20 @@ namespace Unicorn.Util {
 			});
 		}
 
-		public IDisposable Added(Action<T> action, bool weak) {
-			return _added.Add(action, weak);
+		public IDisposable Added(Action<T> action) {
+			return _added.Add(action);
 		}
 
-		public IDisposable Removed(Action<T> action, bool weak) {
-			return _removed.Add(action, weak);
+		public IDisposable AddedWeak(Action<T> action) {
+			return _added.AddWeak(action);
+		}
+
+		public IDisposable Removed(Action<T> action) {
+			return _removed.Add(action);
+		}
+
+		public IDisposable RemovedWeak(Action<T> action) {
+			return _removed.AddWeak(action);
 		}
 
 		public IEnumerator<T> GetEnumerator() {

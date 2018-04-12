@@ -5,7 +5,7 @@ namespace Unicorn.Util {
 	public class SubSet<T> : Set<T> {
 		public SubSet(IReadonlyObservableSet<T> super) {
 			_super = super;
-			_superObserver = super.Removed(item => Remove(item), true);
+			_superObserver = super.RemovedWeak(item => Remove(item));
 		}
 
 		private readonly IReadonlyObservableSet<T> _super;

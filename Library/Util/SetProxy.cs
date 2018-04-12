@@ -45,8 +45,8 @@ namespace Unicorn.Util {
 					_targetObserver.Dispose();
 					if ((_target = value) != null)
 						_targetObserver
-							.Add(_target.Added(item => _added.Use(a => a(item)), false))
-							.Add(_target.Removed(item => _removed.Use(r => r(item)), false));
+							.Add(_target.Added(item => _added.Use(a => a(item))))
+							.Add(_target.Removed(item => _removed.Use(r => r(item))));
 
 					foreach (var item in removedItems)
 						_removed.Use(r => r(item));
@@ -64,12 +64,20 @@ namespace Unicorn.Util {
 			return _target != null && _target.Contains(item);
 		}
 
-		public IDisposable Added(Action<T> action, bool weak) {
-			return _added.Add(action, weak);
+		public IDisposable Added(Action<T> action) {
+			return _added.Add(action);
 		}
 
-		public IDisposable Removed(Action<T> action, bool weak) {
-			return _removed.Add(action, weak);
+		public IDisposable AddedWeak(Action<T> action) {
+			return _added.AddWeak(action);
+		}
+
+		public IDisposable Removed(Action<T> action) {
+			return _removed.Add(action);
+		}
+
+		public IDisposable RemovedWeak(Action<T> action) {
+			return _removed.AddWeak(action);
 		}
 
 		public IEnumerator<T> GetEnumerator() {

@@ -25,8 +25,8 @@ namespace Unicorn {
 			_clientId = -1;
 			_connectionMap = new SortedDictionary<int, Connection>();
 			_connections = new Set<Connection>();
-			_connections.Added(conn => _connectionMap[conn.Id] = conn, false);
-			_connections.Removed(conn => _connectionMap.Remove(conn.Id), false);
+			_connections.Added(conn => _connectionMap[conn.Id] = conn);
+			_connections.Removed(conn => _connectionMap.Remove(conn.Id));
 			_receiveBuffer = new byte[conf.ReceiveBufferSize];
 
 			RouterWorker.Create(this);

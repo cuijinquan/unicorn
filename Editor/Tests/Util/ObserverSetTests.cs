@@ -10,8 +10,8 @@ namespace Unicorn.Tests.Util {
 			var observers = new ObserverSet<DummyObserver>();
 			var dummy = new DummyObserver();
 			var weakDummy = new DummyObserver();
-			observers.Add(dummy, false);
-			observers.Add(weakDummy, true);
+			observers.Add(dummy);
+			observers.AddWeak(weakDummy);
 			observers.Use(d => d.Used = true);
 			Assert.True(dummy.Used);
 			Assert.True(weakDummy.Used);
@@ -22,11 +22,11 @@ namespace Unicorn.Tests.Util {
 			var observers = new ObserverSet<DummyObserver>();
 			var dummyA = new DummyObserver();
 			var dummyB = new DummyObserver();
-			observers.Add(dummyA, false);
+			observers.Add(dummyA);
 			observers.Use(d => d.UsedCount++);
 			Assert.AreEqual(1, dummyA.UsedCount);
 
-			observers.Add(dummyB, false);
+			observers.Add(dummyB);
 			observers.Use(d => d.UsedCount++);
 			Assert.AreEqual(2, dummyA.UsedCount);
 			Assert.AreEqual(1, dummyB.UsedCount);

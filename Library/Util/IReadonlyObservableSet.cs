@@ -7,7 +7,9 @@ namespace Unicorn.Util {
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	public interface IReadonlyObservableSet<T> : IReadonlySet<T> {
-		IDisposable Added(Action<T> action, bool weak);
-		IDisposable Removed(Action<T> action, bool weak);
+		IDisposable Added(Action<T> action);
+		IDisposable AddedWeak(Action<T> action);
+		IDisposable Removed(Action<T> action);
+		IDisposable RemovedWeak(Action<T> action);
 	}
 }

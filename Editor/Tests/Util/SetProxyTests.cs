@@ -51,8 +51,8 @@ namespace Unicorn.Tests.Util {
 			var proxy = new SetProxy<int>();
 			var sum = 0;
 			var observers = new Disposable()
-				.Add(proxy.Added(item => sum += item, false))
-				.Add(proxy.Removed(item => sum -= item, false));
+				.Add(proxy.Added(item => sum += item))
+				.Add(proxy.Removed(item => sum -= item));
 
 			proxy.Target = a;
 			Assert.AreEqual(3, sum);

@@ -40,7 +40,7 @@ namespace Unicorn.Tests.Util {
 			var added = 0;
 			var set = new Set<int>();
 			set.Add(0);
-			var observer = set.Added(item => added++, false);
+			var observer = set.Added(item => added++);
 			set.Add(1);
 			Assert.AreEqual(1, added);
 			observer.Dispose();
@@ -54,7 +54,7 @@ namespace Unicorn.Tests.Util {
 			var set = new Set<int>();
 			set.Add(0);
 			set.Add(1);
-			var observer = set.Removed(item => removed++, false);
+			var observer = set.Removed(item => removed++);
 			set.Remove(0);
 			Assert.AreEqual(1, removed);
 
@@ -65,7 +65,7 @@ namespace Unicorn.Tests.Util {
 			removed = 0;
 			set.Add(5);
 			set.Add(3);
-			observer = set.Removed(item => removed++, false);
+			observer = set.Removed(item => removed++);
 			Assert.AreEqual(1, set.RemoveWhere(n => n < 4));
 			Assert.AreEqual(1, removed);
 		}
@@ -76,7 +76,7 @@ namespace Unicorn.Tests.Util {
 			var set = new Set<int>();
 			set.Add(0);
 			set.Add(1);
-			var observer = set.Removed(item => removed++, false);
+			var observer = set.Removed(item => removed++);
 			set.Clear();
 			Assert.AreEqual(2, removed);
 
