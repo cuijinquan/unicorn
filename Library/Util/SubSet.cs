@@ -10,9 +10,9 @@ namespace Unicorn.Util {
 
 		private readonly IReadonlyObservableSet<T> _super;
 
-#pragma warning disable 0414
+		#pragma warning disable 0414
 		private readonly IDisposable _superObserver;
-#pragma warning restore 0414
+		#pragma warning restore 0414
 
 		public override bool Add(T item) {
 			return _super.Contains(item) && base.Add(item);

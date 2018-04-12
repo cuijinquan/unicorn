@@ -46,6 +46,23 @@ proxy.Target = null;
 // proxy no has no connections.
 ```
 
+## IntersectionSet
+The `IntersectionSet` class represents an intersection of two other sets.
+An intersection set only contains items that are in both specified sets.
+```cs
+var a = new SubSet<Connection>(router.Connections);
+a.Add(conn1);
+a.Add(conn2);
+
+var b = new SubSet<Connection>(router.Connections);
+b.Add(conn2);
+b.Add(conn3);
+
+// Create a set that intersects a and b.
+var i = new IntersectionSet<Connection>(a, b);
+// i has 'conn2', but not 'conn1' or 'conn3'.
+```
+
 <br/>
 
 
