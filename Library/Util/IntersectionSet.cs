@@ -4,7 +4,15 @@ using System.Collections.Generic;
 using System.Collections;
 
 namespace Unicorn.Util {
+	/// <summary>
+	/// A set that represents the intersection of two sets.
+	/// </summary>
 	public class IntersectionSet<T> : IReadonlyObservableSet<T> {
+		/// <summary>
+		/// Create a new intersection set.
+		/// </summary>
+		/// <param name="a"></param>
+		/// <param name="b"></param>
 		public IntersectionSet(IReadonlyObservableSet<T> a, IReadonlyObservableSet<T> b) {
 			_a = a;
 			_b = b;

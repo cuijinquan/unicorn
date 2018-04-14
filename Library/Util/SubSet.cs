@@ -2,7 +2,14 @@
 using System;
 
 namespace Unicorn.Util {
+	/// <summary>
+	/// A set that ensures that it only contains items that are in it's super set.
+	/// </summary>
 	public class SubSet<T> : Set<T> {
+		/// <summary>
+		/// Create a new sub set with the specified super set.
+		/// </summary>
+		/// <param name="super"></param>
 		public SubSet(IReadonlyObservableSet<T> super) {
 			_super = super;
 			_superObserver = super.RemovedWeak(item => Remove(item));
