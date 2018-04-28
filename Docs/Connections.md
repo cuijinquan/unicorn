@@ -1,5 +1,5 @@
 # Connection Sets/Groups
-Managing and tracking connections can be very complex and can quickly lead to a variety of different bugs. Managing and tracking connections can be very complex and can quickly lead to a variety of different bugs. To prevent this, Unicorn provides well thought-out collections designed to manage and respond to changes in super and subsets of connections. They can be found in the `Unicorn.Util` namespace.
+Managing and tracking connections can be very complex and can quickly lead to a variety of different bugs. To prevent this, Unicorn provides well thought-out collections designed to manage and respond to changes in super and subsets of connections. They can be found in the `Unicorn.Util` namespace.
 
 <br/>
 
